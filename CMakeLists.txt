@@ -2,51 +2,74 @@ cmake_minimum_required(VERSION 3.15)
 project(opengl_test)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 头文件路径
+# 设置可执行文件输出目录
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+# 查找OpenGL
+find_package(OpenGL REQUIRED)
+
+# 设置第三方库目录
+set(THIRD_PARTY_DIR ${CMAKE_SOURCE_DIR}/lib)
+
+# GLEW
+set(GLEW_DIR ${THIRD_PARTY_DIR}/glew-2.2.0)
+set(GLEW_INCLUDE_DIRS ${GLEW_DIR}/include)
+set(GLEW_LIBRARIES ${GLEW_DIR}/lib/Release/x64/glew32s.lib)
+
+# GLFW
+set(GLFW_DIR ${THIRD_PARTY_DIR}/glfw-3.4.bin.WIN64)
+set(GLFW_INCLUDE_DIRS ${GLFW_DIR}/include)
+set(GLFW_LIBRARIES 
+    ${GLFW_DIR}/lib-vc2022/glfw3.lib
+)
+
+# GLM
+set(GLM_DIR ${THIRD_PARTY_DIR}/glm)
+
+# 包含目录
 include_directories(
-    "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/include"
-    "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/include"
-    "${CMAKE_SOURCE_DIR}/lib/glm"
-    "${CMAKE_SOURCE_DIR}/include"
+    ${OPENGL_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_DIRS}
+    ${GLFW_INCLUDE_DIRS}
+    ${GLM_DIR}
+    ${CMAKE_SOURCE_DIR}/include
 )
 
-# 库文件路径
-link_directories(
-    "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/lib/Release/x64"
-    "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/lib-mingw-w64"
+# 查找所有源文件
+file(GLOB_RECURSE SOURCES 
+    "src/*.cpp"
+    "main.cpp"
 )
 
-# 确定编译的文件
-add_executable(opengl_test
-    ./main.cpp
-    ./src/shapes.cpp
-    ./src/shader.cpp
-)
+# 创建可执行文件
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-# 所有需要导入的dll文件
-set(ALL_DLL_FILES
-    "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/bin/Release/x64/glew32.dll"
-    "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/lib-mingw-w64/glfw3.dll"
+# 链接库
+target_link_libraries(${PROJECT_NAME}
+    ${OPENGL_LIBRARIES}
+    ${GLEW_LIBRARIES}
+    ${GLFW_LIBRARIES}
 )
-
-# 链接 GLEW + OpenGL + GLFW（Windows）
-target_link_libraries(opengl_test
-    PRIVATE
-    glew32
-    glfw3
-    opengl32
-)
-
-# 编译后复制所有DLL到目标
-foreach(dll_file ${ALL_DLL_FILES})
-    add_custom_command(TARGET opengl_test POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${dll_file}"
-        $<TARGET_FILE_DIR:opengl_test>
-    )
-endforeach()
 
 # 复制着色器文件到构建目录
-configure_file(shaders/vertex.glsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/vertex.glsl COPYONLY)
-configure_file(shaders/fragment.glsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/fragment.glsl COPYONLY)
+file(GLOB SHADERS "shaders/*")
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${SHADERS}
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders/
+)
+
+# 复制必要的DLL文件到构建目录
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${GLEW_DIR}/bin/Release/x64/glew32.dll
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${GLFW_DIR}/lib-vc2022/glfw3.dll
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>
+)
