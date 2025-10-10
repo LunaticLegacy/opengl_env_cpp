@@ -5,6 +5,11 @@
 #include <stdexcept>
 #include <vector>
 
+/**
+ * @brief GLFW 初始化/终止管理器
+ *
+ * 负责调用 glfwInit() / glfwTerminate()，保证在多窗口场景下只初始化/终止一次。
+ */
 class GLCore {
 public:
     // 初始化 GLFW（只调用一次）
@@ -40,6 +45,14 @@ private:
 
 class Window {
 public:
+    /**
+     * @brief 创建并初始化一个窗口
+     * @param width 窗口宽度（像素）
+     * @param height 窗口高度（像素）
+     * @param title 窗口标题
+     *
+     * 该构造器会：确保 GLFW 被初始化、创建 GLFW 窗口、设置当前上下文、初始化 GLEW（仅首次）、设置视口并启用深度测试。
+     */
     Window(int width = 800, int height = 600, const char* title = "OpenGL Window")
         : m_width(width), m_height(height), m_title(title)
     {
@@ -83,27 +96,43 @@ public:
         }
     }
 
-    // 获取窗口对象
+    /**
+     * @brief 获取底层 GLFWwindow* 指针
+     * @return 指向内部 GLFW 窗口对象的指针，可用于注册 GLFW 回调或直接调用 GLFW API
+     */
     GLFWwindow* GetGLFWwindow() const {
         return m_window;
     }
 
-    // 检查窗口是否应该关闭
+    /**
+     * @brief 检查窗口是否请求关闭
+     * @return 如果窗口已收到关闭事件（例如点击关闭按钮）则返回 true
+     */
     bool ShouldClose() const {
         return glfwWindowShouldClose(m_window);
     }
 
-    // 交换缓冲区
+    /**
+     * @brief 交换前后缓冲区（将后备缓冲内容呈现到屏幕）
+     */
     void SwapBuffers() {
         glfwSwapBuffers(m_window);
     }
 
-    // 处理事件
+    /**
+     * @brief 处理由操作系统/GLFW 产生的事件（键盘/鼠标/窗口事件等）
+     *
+     * 通常在每帧末尾调用以处理回调和更新内部事件队列。
+     */
     void PollEvents() {
         glfwPollEvents();
     }
 
-    // 清除屏幕
+    /**
+     * @brief 清理当前帧的颜色/深度缓冲区
+     *
+     * 本实现会使用固定的背景颜色并清除颜色与深度缓冲。若需自定义背景色请修改此方法或在外部调用 glClearColor
+     */
     void Clear() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

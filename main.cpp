@@ -16,7 +16,14 @@ static Camera* g_camera = nullptr;
 static bool firstMouse = true;
 static double lastX = 400.0, lastY = 300.0;
 
-// 鼠标移动回调，用来控制摄像机朝向
+/**
+ * @brief 鼠标移动回调
+ * @param window 触发事件的 GLFWwindow*（可用于额外查询输入状态）
+ * @param xpos 鼠标当前 X 坐标（像素，相对于窗口左上角）
+ * @param ypos 鼠标当前 Y 坐标（像素，相对于窗口左上角）
+ *
+ * 回调会把鼠标偏移量传入全局摄像机对象的 processMouseMovement。
+ */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     if (!g_camera) return;
 
@@ -52,8 +59,8 @@ int main() {
         glfwSetInputMode(window.GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glfwSetCursorPosCallback(window.GetGLFWwindow(), mouse_callback);
 
-        // 先反转一下鼠标。
-        camera.toggleInvertX();
+    // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
+    // camera.toggleInvertX();
 
         float lastFrame = 0.0f;
 
@@ -104,22 +111,25 @@ int main() {
             lastVState = vState;
             lastBState = bState;
 
+            // 清屏并准备绘制
             window.Clear();
 
             // 使用着色器并绘制所有形状
             shader.use();
-            // 上传 view 和 projection
+            // 上传视图与投影矩阵到着色器（uniform 名称需与着色器代码一致）
             glm::mat4 view = camera.getViewMatrix();
             glm::mat4 projection = camera.getProjectionMatrix(800.0f / 600.0f);
             shader.setMat4("view", view);
             shader.setMat4("projection", projection);
 
+            // 将 shader 传入各个 shape 的 draw，以便它们内部上传 model 与 color
             point.draw(shader);
             line.draw(shader);
             triangle.draw(shader);
             cube.draw(shader);
             sphere.draw(shader);
 
+            // 交换缓冲并处理事件
             window.SwapBuffers();
             window.PollEvents();
         }

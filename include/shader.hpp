@@ -3,23 +3,54 @@
 #include <string>
 #include <glm/glm.hpp>
 
+/**
+ * @brief 简单的着色器封装：从顶点/片段着色器文件构建 program，并提供常用 uniform 上传方法
+ */
 class Shader {
 public:
-    // 程序ID
+    // 程序 ID（OpenGL shader program）
     unsigned int ID;
 
-    // 构造器读取并构建着色器
+    /**
+     * @brief 构造 Shader
+     * @param vertexPath 顶点着色器文件路径（相对于运行目录或工程路径）
+     * @param fragmentPath 片段着色器文件路径
+     *
+     * 该构造器会读取文件、编译顶点/片段着色器并链接为 program，若失败会打印错误信息。
+     */
     Shader(const char* vertexPath, const char* fragmentPath);
 
-    // 使用/激活程序
+    /**
+     * @brief 激活/使用该着色器程序（会调用 glUseProgram(ID)）
+     */
     void use();
 
-    // uniform工具函数
+    /**
+     * @brief 设置 float 类型 uniform
+     * @param name uniform 名称
+     * @param value 要设置的浮点值
+     */
     void setFloat(const std::string &name, float value) const;
+
+    /**
+     * @brief 设置 vec3 类型 uniform
+     * @param name uniform 名称
+     * @param value 三维向量 (x,y,z)
+     */
     void setVec3(const std::string &name, const glm::vec3 &value) const;
+
+    /**
+     * @brief 设置 mat4 类型 uniform
+     * @param name uniform 名称
+     * @param mat 4x4 矩阵（按列主序传递给 OpenGL）
+     */
     void setMat4(const std::string &name, const glm::mat4 &mat) const;
 
 private:
-    // 检查着色器错误
+    /**
+     * @brief 编译或链接出错时打印详细信息
+     * @param shader 着色器/程序 ID
+     * @param type 错误类型标识（"VERTEX", "FRAGMENT", "PROGRAM"）
+     */
     void checkCompileErrors(unsigned int shader, std::string type);
 };

@@ -6,6 +6,9 @@
 #include <cmath>
 
 // Shape implementation
+/**
+ * @brief 基础构造函数，初始化变换为单位变换
+ */
 Shape::Shape() : m_position(0.0f, 0.0f, 0.0f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.0f, 1.0f, 1.0f) {
 }
 
@@ -64,6 +67,11 @@ Point::Point(float x, float y, float z, const glm::vec3& color) : ColoredShape(c
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制单个点
+ * @param shader 当前激活的着色器引用。函数会使用 shader.setMat4("model", ...) 和 shader.setVec3("color", ...)
+ *               因此传入的着色器需要定义对应 uniform（model, color）。
+ */
 void Point::draw(Shader& shader) {
     // 上传 model 与 color
     glm::mat4 model = getModelMatrix();
@@ -114,6 +122,10 @@ Line::Line(float startX, float startY, float startZ,
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制线段
+ * @param shader 着色器引用，会上传 model 矩阵与 color
+ */
 void Line::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
@@ -157,6 +169,10 @@ Triangle::Triangle(float x1, float y1, float z1,
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制三角形
+ * @param shader 着色器引用，会上传 model 矩阵与 color
+ */
 void Triangle::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
@@ -202,6 +218,10 @@ Quad::Quad(float x1, float y1, float z1,
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制四边形（使用 GL_QUADS）
+ * @param shader 着色器引用，会上传 model 矩阵与 color
+ */
 void Quad::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
@@ -291,6 +311,10 @@ Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制立方体网格（三角形面）
+ * @param shader 着色器引用，会上传 model 矩阵与 color
+ */
 void Cube::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
@@ -375,6 +399,10 @@ Sphere::Sphere(float radius, int sectors, int stacks, const glm::vec3& color)
     glBindVertexArray(0);
 }
 
+/**
+ * @brief 绘制球体（使用索引绘制）
+ * @param shader 着色器引用，会上传 model 矩阵与 color
+ */
 void Sphere::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
