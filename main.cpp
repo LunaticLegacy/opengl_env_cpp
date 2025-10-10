@@ -27,6 +27,8 @@ int main() {
         ParticleSystem particleSystem(2000);
         particleSystem.setEmissionRate(300.0f); // 每秒发射300个粒子
         particleSystem.setParticleLifetime(2.0f); // 粒子生命周期2秒
+    // 将发射器放在窗口中心（像素坐标系）
+    particleSystem.setEmitterPosition(glm::vec3(400.0f, 300.0f, 0.0f));
 
         // 记录时间
         float lastTime = glfwGetTime();

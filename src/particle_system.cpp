@@ -1,5 +1,6 @@
 #include "particle_system.hpp"
 #include <glm/gtc/random.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <random>
 #include <iostream>
 
@@ -129,28 +130,29 @@ void ParticleSystem::emitParticle() {
 }
 
 void ParticleSystem::respawnParticle(Particle& particle) {
-    // 随机初始位置（围绕发射器）
-    float randomX = glm::linearRand(-0.1f, 0.1f);
-    float randomY = glm::linearRand(-0.1f, 0.1f);
-    float randomZ = glm::linearRand(-0.1f, 0.1f);
-    
+    // 随机初始位置（围绕发射器），单位为像素（发射器通常在窗口坐标内）
+    float randomX = glm::linearRand(-10.0f, 10.0f);
+    float randomY = glm::linearRand(-10.0f, 10.0f);
+    float randomZ = glm::linearRand(-1.0f, 1.0f);
+
     particle.position = emitterPosition + glm::vec3(randomX, randomY, randomZ);
-    
-    // 随机初始速度
-    float randomVelX = glm::linearRand(-1.0f, 1.0f);
-    float randomVelY = glm::linearRand(0.5f, 2.0f);
-    float randomVelZ = glm::linearRand(-0.5f, 0.5f);
-    
+
+    // 随机初始速度（像素/秒）
+    float randomVelX = glm::linearRand(-50.0f, 50.0f);
+    float randomVelY = glm::linearRand(20.0f, 150.0f);
+    float randomVelZ = glm::linearRand(-10.0f, 10.0f);
+
     particle.velocity = emitterVelocity + glm::vec3(randomVelX, randomVelY, randomVelZ);
-    
+
     // 随机颜色（暖色调）
     float red = glm::linearRand(0.5f, 1.0f);
     float green = glm::linearRand(0.2f, red);
     float blue = glm::linearRand(0.0f, green);
-    
+
     particle.color = glm::vec4(red, green, blue, 1.0f);
     particle.life = particleLifetime;
     particle.rotation = glm::linearRand(0.0f, 360.0f);
-    particle.rotationSpeed = glm::linearRand(-60.0f, 60.0f);
-    particle.size = glm::linearRand(0.05f, 0.15f);
+    particle.rotationSpeed = glm::linearRand(-90.0f, 90.0f);
+    // 粒子大小以像素为单位（quad 模板为 0..1，所以使用 scale 把它扩大为像素）
+    particle.size = glm::linearRand(4.0f, 20.0f);
 }
