@@ -21,6 +21,7 @@ link_directories(
 add_executable(opengl_test
     ./main.cpp
     ./src/shapes.cpp
+    ./src/camera.cpp
     ./src/shader.cpp
 )
 

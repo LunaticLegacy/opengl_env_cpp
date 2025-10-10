@@ -1,10 +1,50 @@
 #include "shapes.hpp"
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <cmath>
+
+// Shape implementation
+Shape::Shape() : m_position(0.0f, 0.0f, 0.0f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.0f, 1.0f, 1.0f) {
+}
+
+void Shape::setPosition(const glm::vec3& position) {
+    m_position = position;
+}
+
+void Shape::setRotation(const glm::vec3& rotation) {
+    m_rotation = rotation;
+}
+
+void Shape::setScale(const glm::vec3& scale) {
+    m_scale = scale;
+}
+
+glm::mat4 Shape::getModelMatrix() const {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, m_position);
+    model = glm::rotate(model, glm::radians(m_rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(m_rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(m_rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, m_scale);
+    return model;
+}
+
+// ColoredShape implementation
+ColoredShape::ColoredShape(const glm::vec3& color) : m_color(color) {
+}
+
+void ColoredShape::setColor(const glm::vec3& color) {
+    m_color = color;
+}
+
+glm::vec3 ColoredShape::getColor() const {
+    return m_color;
+}
 
 // Point implementation
-Point::Point(float x, float y, float z) : position(x, y, z) {
+Point::Point(float x, float y, float z, const glm::vec3& color) : ColoredShape(color), position(x, y, z) {
     // 生成并绑定VAO
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -24,7 +64,12 @@ Point::Point(float x, float y, float z) : position(x, y, z) {
     glBindVertexArray(0);
 }
 
-void Point::draw() {
+void Point::draw(Shader& shader) {
+    // 上传 model 与 color
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, 1);
     glBindVertexArray(0);
@@ -36,16 +81,16 @@ Point::~Point() {
 }
 
 // Point2D implementation
-Point2D::Point2D(float x, float y) : Point(x, y, 0.0f) {}
+Point2D::Point2D(float x, float y, const glm::vec3& color) : Point(x, y, 0.0f, color) {}
 
 // Point3D implementation
-Point3D::Point3D(float x, float y, float z) : Point(x, y, z) {}
+Point3D::Point3D(float x, float y, float z, const glm::vec3& color) : Point(x, y, z, color) {}
 
 // Line implementation
 Line::Line(float startX, float startY, float startZ,
-           float endX, float endY, float endZ)
-    : startPoint(startX, startY, startZ),
-      endPoint(endX, endY, endZ) {
+           float endX, float endY, float endZ,
+           const glm::vec3& color)
+    : ColoredShape(color), startPoint(startX, startY, startZ), endPoint(endX, endY, endZ) {
     
     // 生成并绑定VAO
     glGenVertexArrays(1, &VAO);
@@ -69,7 +114,11 @@ Line::Line(float startX, float startY, float startZ,
     glBindVertexArray(0);
 }
 
-void Line::draw() {
+void Line::draw(Shader& shader) {
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, 2);
     glBindVertexArray(0);
@@ -83,7 +132,8 @@ Line::~Line() {
 // Triangle implementation
 Triangle::Triangle(float x1, float y1, float z1,
                    float x2, float y2, float z2,
-                   float x3, float y3, float z3) {
+                   float x3, float y3, float z3,
+                   const glm::vec3& color) : ColoredShape(color) {
     vertices[0] = glm::vec3(x1, y1, z1);
     vertices[1] = glm::vec3(x2, y2, z2);
     vertices[2] = glm::vec3(x3, y3, z3);
@@ -107,7 +157,11 @@ Triangle::Triangle(float x1, float y1, float z1,
     glBindVertexArray(0);
 }
 
-void Triangle::draw() {
+void Triangle::draw(Shader& shader) {
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
@@ -122,7 +176,8 @@ Triangle::~Triangle() {
 Quad::Quad(float x1, float y1, float z1,
            float x2, float y2, float z2,
            float x3, float y3, float z3,
-           float x4, float y4, float z4) {
+           float x4, float y4, float z4,
+           const glm::vec3& color) : ColoredShape(color) {
     vertices[0] = glm::vec3(x1, y1, z1);
     vertices[1] = glm::vec3(x2, y2, z2);
     vertices[2] = glm::vec3(x3, y3, z3);
@@ -147,7 +202,11 @@ Quad::Quad(float x1, float y1, float z1,
     glBindVertexArray(0);
 }
 
-void Quad::draw() {
+void Quad::draw(Shader& shader) {
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_QUADS, 0, 4);
     glBindVertexArray(0);
@@ -156,4 +215,178 @@ void Quad::draw() {
 Quad::~Quad() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+}
+
+// Cube implementation
+Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
+    float halfSize = size / 2.0f;
+    
+    // 立方体顶点数据
+    float cubeVertices[] = {
+        // 前面
+        -halfSize, -halfSize,  halfSize,
+         halfSize, -halfSize,  halfSize,
+         halfSize,  halfSize,  halfSize,
+         halfSize,  halfSize,  halfSize,
+        -halfSize,  halfSize,  halfSize,
+        -halfSize, -halfSize,  halfSize,
+
+        // 左面
+        -halfSize, -halfSize, -halfSize,
+        -halfSize, -halfSize,  halfSize,
+        -halfSize,  halfSize,  halfSize,
+        -halfSize,  halfSize,  halfSize,
+        -halfSize,  halfSize, -halfSize,
+        -halfSize, -halfSize, -halfSize,
+
+        // 后面
+         halfSize, -halfSize, -halfSize,
+        -halfSize, -halfSize, -halfSize,
+        -halfSize,  halfSize, -halfSize,
+        -halfSize,  halfSize, -halfSize,
+         halfSize,  halfSize, -halfSize,
+         halfSize, -halfSize, -halfSize,
+
+        // 右面
+         halfSize, -halfSize,  halfSize,
+         halfSize, -halfSize, -halfSize,
+         halfSize,  halfSize, -halfSize,
+         halfSize,  halfSize, -halfSize,
+         halfSize,  halfSize,  halfSize,
+         halfSize, -halfSize,  halfSize,
+
+        // 上面
+        -halfSize,  halfSize,  halfSize,
+         halfSize,  halfSize,  halfSize,
+         halfSize,  halfSize, -halfSize,
+         halfSize,  halfSize, -halfSize,
+        -halfSize,  halfSize, -halfSize,
+        -halfSize,  halfSize,  halfSize,
+
+        // 下面
+        -halfSize, -halfSize, -halfSize,
+         halfSize, -halfSize, -halfSize,
+         halfSize, -halfSize,  halfSize,
+         halfSize, -halfSize,  halfSize,
+        -halfSize, -halfSize,  halfSize,
+        -halfSize, -halfSize, -halfSize
+    };
+
+    // 生成并绑定VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 生成并绑定VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // 填充VBO数据
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+void Cube::draw(Shader& shader) {
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+}
+
+Cube::~Cube() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+}
+
+// Sphere implementation
+Sphere::Sphere(float radius, int sectors, int stacks, const glm::vec3& color) 
+    : ColoredShape(color), sectorCount(sectors), stackCount(stacks) {
+    
+    float sectorStep = 2 * M_PI / sectorCount;
+    float stackStep = M_PI / stackCount;
+    
+    for (int i = 0; i <= stackCount; ++i) {
+        float stackAngle = M_PI / 2 - i * stackStep;  // 从 pi/2 到 -pi/2
+        float xy = radius * cosf(stackAngle);         // r * cos(u)
+        float z = radius * sinf(stackAngle);          // r * sin(u)
+
+        // 通过扇区添加 (sectorCount+1) 个顶点
+        for (int j = 0; j <= sectorCount; ++j) {
+            float sectorAngle = j * sectorStep;       // 从 0 到 2pi
+
+            // 顶点位置 (x, y, z)
+            float x = xy * cosf(sectorAngle);         // r * cos(u) * cos(v)
+            float y = xy * sinf(sectorAngle);         // r * cos(u) * sin(v)
+            
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+        }
+    }
+
+    // 生成索引
+    for (int i = 0; i < stackCount; ++i) {
+        int k1 = i * (sectorCount + 1);     // 当前堆栈的起始索引
+        int k2 = k1 + sectorCount + 1;      // 下一堆栈的起始索引
+
+        for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
+            // 2个三角形构成一个四边形
+            if (i != 0) {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+
+            if (i != (stackCount - 1)) {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
+    }
+
+    // 生成并绑定VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 生成并绑定VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+
+    // 生成并绑定EBO
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+void Sphere::draw(Shader& shader) {
+    glm::mat4 model = getModelMatrix();
+    shader.setMat4("model", model);
+    shader.setVec3("color", getColor());
+
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
+Sphere::~Sphere() {
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
 }
