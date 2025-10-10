@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(
     "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/include"
     "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/include"
+    "${CMAKE_SOURCE_DIR}/lib/glm"
     "${CMAKE_SOURCE_DIR}/include"
 )
 
@@ -19,6 +20,8 @@ link_directories(
 # 确定编译的文件
 add_executable(opengl_test
     ./main.cpp
+    ./src/shapes.cpp
+    ./src/shader.cpp
 )
 
 # 所有需要导入的dll文件
@@ -44,3 +47,6 @@ foreach(dll_file ${ALL_DLL_FILES})
     )
 endforeach()
 
+# 复制着色器文件到构建目录
+configure_file(shaders/vertex.glsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/vertex.glsl COPYONLY)
+configure_file(shaders/fragment.glsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/fragment.glsl COPYONLY)

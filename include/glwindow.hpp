@@ -43,7 +43,7 @@ public:
     Window(int width = 800, int height = 600, const char* title = "OpenGL Window")
         : m_width(width), m_height(height), m_title(title)
     {
-        if (!GLCore::is_initialized) GLCore::Initialize(); // 确保 GLFW 已初始化
+        if (!GLCore::is_initialized()) GLCore::Initialize(); // 确保 GLFW 已初始化
         
         // 创建窗口
         m_window = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
@@ -73,24 +73,51 @@ public:
     ~Window() {
         if (m_window) {
             glfwDestroyWindow(m_window);
+            m_window = nullptr;
         }
         // GLFW 终止只在最后一个窗口析构时调用
         s_windowCount--;
         if (s_windowCount == 0) {
+            s_glewInitialized = false;
             GLCore::Shutdown();
         }
     }
 
+    // 获取窗口对象
+    GLFWwindow* GetGLFWwindow() const {
+        return m_window;
+    }
+
+    // 检查窗口是否应该关闭
+    bool ShouldClose() const {
+        return glfwWindowShouldClose(m_window);
+    }
+
+    // 交换缓冲区
+    void SwapBuffers() {
+        glfwSwapBuffers(m_window);
+    }
+
+    // 处理事件
+    void PollEvents() {
+        glfwPollEvents();
+    }
+
+    // 清除屏幕
+    void Clear() {
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
     // 主循环
     void Run() {
-        while (!glfwWindowShouldClose(m_window)) {
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        while (!ShouldClose()) {
+            Clear();
 
             // TODO: 绘制内容。
 
-            glfwSwapBuffers(m_window);
-            glfwPollEvents();
+            SwapBuffers();
+            PollEvents();
         }
     }
 
