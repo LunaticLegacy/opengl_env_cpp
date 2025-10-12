@@ -23,6 +23,7 @@ add_executable(opengl_test
     ./src/shapes.cpp
     ./src/camera.cpp
     ./src/shader.cpp
+    ./src/light.cpp
 )
 
 # 所有需要导入的dll文件

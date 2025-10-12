@@ -10,6 +10,7 @@
 #include "shapes.hpp"
 #include "shader.hpp"
 #include "camera.hpp"
+#include "light.hpp"
 
 // 全局用于回调的指针（简单处理）
 static Camera* g_camera = nullptr;
@@ -79,6 +80,10 @@ int main() {
         Sphere sphere(0.3f, 36, 18, glm::vec3(1.0f, 0.0f, 1.0f)); // 紫色球体
         sphere.setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
 
+        // 创建光源
+        Light light(POINT_LIGHT, glm::vec3(1.2f, 1.0f, 2.0f));
+        light.setColor(glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f));
+        
         // 主渲染循环
         while (!window.ShouldClose()) {
             float currentFrame = (float)glfwGetTime();
@@ -121,6 +126,18 @@ int main() {
             glm::mat4 projection = camera.getProjectionMatrix(800.0f / 600.0f);
             shader.setMat4("view", view);
             shader.setMat4("projection", projection);
+            
+            // 设置视点位置
+            shader.setVec3("viewPos", camera.Position());
+            
+            // 设置材质属性
+            shader.setVec3("material.ambient",  glm::vec3(1.0f, 0.5f, 0.31f));
+            shader.setVec3("material.diffuse",  glm::vec3(1.0f, 0.5f, 0.31f));
+            shader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+            shader.setFloat("material.shininess", 32.0f);
+            
+            // 设置光源属性
+            light.setUniform(shader.ID, "light");
 
             // 将 shader 传入各个 shape 的 draw，以便它们内部上传 model 与 color
             point.draw(shader);
