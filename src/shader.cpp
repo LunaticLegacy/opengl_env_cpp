@@ -37,7 +37,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     }
     
     const char* vShaderCode = vertexCode.c_str();
-    const char * fShaderCode = fragmentCode.c_str();
+    const char* fShaderCode = fragmentCode.c_str();
     
     // 2. 编译着色器
     unsigned int vertex, fragment;

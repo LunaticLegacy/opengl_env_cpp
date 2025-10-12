@@ -59,8 +59,8 @@ int main() {
         glfwSetInputMode(window.GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         glfwSetCursorPosCallback(window.GetGLFWwindow(), mouse_callback);
 
-    // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
-    // camera.toggleInvertX();
+        // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
+        camera.toggleInvertX();
 
         float lastFrame = 0.0f;
 
