@@ -31,7 +31,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 int main() {
     try {
         // 创建窗口
-        Window window(800, 600, "OpenGL 3D Engine");
+        Window window(1920, 1080, "OpenGL 3D Engine");
 
         // 创建着色器程序
         Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -86,12 +86,16 @@ int main() {
 
         // 创建光源
         Sphere* sun = new Sphere(0.5f);
-        sun->setPosition(glm::vec3(1.2f, 1.0f, 2.0f));
+        sun->setPosition(glm::vec3(1.2f, -2.0f, 2.0f));
         window.AddShape(sun);
 
-        Light* light = new Light(POINT_LIGHT, glm::vec3(1.2f, 1.0f, 2.0f));
-        light->setColor(glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f));
-        window.AddLightSource(light);
+        Light* whitelight = new Light(POINT_LIGHT, glm::vec3(1.2f, -2.0f, 2.0f));
+        whitelight->setColor(glm::vec3(1.0f), glm::vec3(0.9), glm::vec3(0.9));
+        window.AddLightSource(whitelight);
+
+        Light* redlight = new Light(POINT_LIGHT, glm::vec3(-1.2f, 2.0f, -1.0f));
+        redlight->setColor(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.9f, 0.9f), glm::vec3(1.0f, 0.9f, 0.9f));
+        window.AddLightSource(redlight);
 
         window.Run();
         

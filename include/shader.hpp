@@ -26,6 +26,13 @@ public:
     void use();
 
     /**
+     * @brief 设置 int 类型 uniform
+     * @param name uniform 名称
+     * @param value 要设置的整数值
+     */
+    void setInt(const std::string &name, int value) const;
+
+    /**
      * @brief 设置 float 类型 uniform
      * @param name uniform 名称
      * @param value 要设置的浮点值

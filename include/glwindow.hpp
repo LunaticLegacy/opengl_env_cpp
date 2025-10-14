@@ -9,6 +9,11 @@
 #include <sstream>
 #include <iomanip>
 
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
+
+
 #include "shapes.hpp"
 #include "shader.hpp"
 #include "light.hpp"
@@ -53,6 +58,14 @@ private:
 
 #define WINDOW_BASIC                // 窗口基本功能
 #define WINDOW_CALLBACK_MANAGER     // 窗口回调函数管理
+
+// 渲染模式枚举
+enum class RenderMode {
+    VERTEX_SHADER_RESULT = 0,    // 顶点着色器结果
+    RASTERIZED_RESULT = 1,       // 光栅化后结果
+    FRAGMENT_SHADER_RESULT = 2,  // 片段着色后结果
+    FINAL_RESULT = 3             // 最终处理结果
+};
 
 class Window {
 public:
@@ -186,6 +199,9 @@ public:
             m_shader->setMat4("view", view);
             m_shader->setMat4("projection", projection);
 
+            // 设置渲染模式
+            m_shader->setInt("renderMode", static_cast<int>(m_renderMode));
+
             // 更新时间
             currentFrame = (float)glfwGetTime();
             deltaTime = currentFrame - lastFrame;
@@ -213,9 +229,6 @@ public:
                 m_shader->setMat4("model", model);
                 shape->draw(*(this->m_shader));
             }
-
-            // 显示摄像机坐标
-            // this->displayCameraCoordinates(currentFrame);
 
             // 刷新缓冲区，并轮询。
             this->SwapBuffers();
@@ -251,6 +264,9 @@ private:
 
     std::vector<ColoredShape*> m_shape_list;  // 形状列表
     std::vector<Light*> m_light_list;         // 光源列表
+
+    // 渲染模式
+    RenderMode m_renderMode = RenderMode::FINAL_RESULT;
 
     static inline bool s_glewInitialized = false;
     static inline int s_windowCount = 0;
@@ -294,62 +310,62 @@ private:
         }
         lastVState = vState;
         lastBState = bState;
+
+        // 渲染模式切换
+        static int lastUState = GLFW_RELEASE;
+        static int lastIState = GLFW_RELEASE;
+        int uState = glfwGetKey(m_window, GLFW_KEY_U);
+        int iState = glfwGetKey(m_window, GLFW_KEY_I);
+        
+        if (uState == GLFW_PRESS && lastUState == GLFW_RELEASE) {
+            cycleRenderModeForward();
+        }
+        if (iState == GLFW_PRESS && lastIState == GLFW_RELEASE) {
+            cycleRenderModeBackward();
+        }
+        lastUState = uState;
+        lastIState = iState;
     }
 
     /**
-     * @brief 显示摄像机坐标
+     * @brief 向前循环切换渲染模式
      */
-    void displayCameraCoordinates(float currentFrame) {
-        // 每隔0.5秒在控制台输出一次摄像机坐标
-        if (currentFrame - m_lastCameraOutput > 0.5f) {
-            glm::vec3 pos = m_camera->Position;
-            std::stringstream ss;
-            ss << std::fixed << std::setprecision(2);
-            ss << "Camera: (" << pos.x << ", " << pos.y << ", " << pos.z << ")";
-            std::cout << ss.str() << std::endl;
-            m_lastCameraOutput = currentFrame;
+    void cycleRenderModeForward() {
+        switch (m_renderMode) {
+            case RenderMode::VERTEX_SHADER_RESULT:
+                m_renderMode = RenderMode::RASTERIZED_RESULT;
+                break;
+            case RenderMode::RASTERIZED_RESULT:
+                m_renderMode = RenderMode::FRAGMENT_SHADER_RESULT;
+                break;
+            case RenderMode::FRAGMENT_SHADER_RESULT:
+                m_renderMode = RenderMode::FINAL_RESULT;
+                break;
+            case RenderMode::FINAL_RESULT:
+                m_renderMode = RenderMode::VERTEX_SHADER_RESULT;
+                break;
         }
-        
-        // 在屏幕右上角绘制一个简单的指示器
-        glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        // 禁用深度测试，确保始终在最上层显示
-        glDisable(GL_DEPTH_TEST);
-        
-        // 设置正交投影
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0.0f, m_width, m_height, 0.0f, -1.0f, 1.0f);
-        
-        // 设置模型视图矩阵
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-        
-        // 绘制一个简单的坐标指示器（红色方块）
-        glBegin(GL_QUADS);
-        glColor3f(1.0f, 0.0f, 0.0f);  // 红色
-        glVertex2f(m_width - 30, 10);
-        glVertex2f(m_width - 10, 10);
-        glVertex2f(m_width - 10, 30);
-        glVertex2f(m_width - 30, 30);
-        glEnd();
-        
-        // 绘制文字提示（简单绘制几个点代表"C"）
-        glColor3f(1.0f, 1.0f, 1.0f);  // 白色
-        glBegin(GL_POINTS);
-        glVertex2f(m_width - 50, 15);
-        glVertex2f(m_width - 55, 20);
-        glVertex2f(m_width - 50, 25);
-        glEnd();
-        
-        // 恢复OpenGL状态
-        glPopMatrix();
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        
-        glPopAttrib();
+        std::cout << "Render mode: " << static_cast<int>(m_renderMode) << std::endl;
+    }
+
+    /**
+     * @brief 向后循环切换渲染模式
+     */
+    void cycleRenderModeBackward() {
+        switch (m_renderMode) {
+            case RenderMode::VERTEX_SHADER_RESULT:
+                m_renderMode = RenderMode::FINAL_RESULT;
+                break;
+            case RenderMode::RASTERIZED_RESULT:
+                m_renderMode = RenderMode::VERTEX_SHADER_RESULT;
+                break;
+            case RenderMode::FRAGMENT_SHADER_RESULT:
+                m_renderMode = RenderMode::RASTERIZED_RESULT;
+                break;
+            case RenderMode::FINAL_RESULT:
+                m_renderMode = RenderMode::FRAGMENT_SHADER_RESULT;
+                break;
+        }
+        std::cout << "Render mode: " << static_cast<int>(m_renderMode) << std::endl;
     }
 };

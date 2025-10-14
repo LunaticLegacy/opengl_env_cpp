@@ -8,6 +8,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/include"
     "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/include"
     "${CMAKE_SOURCE_DIR}/lib/glm"
+    "${CMAKE_SOURCE_DIR}/lib/imgui-master"
+    "${CMAKE_SOURCE_DIR}/lib/imgui-master/backends"
     "${CMAKE_SOURCE_DIR}/include"
 )
 
