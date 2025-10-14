@@ -5,7 +5,7 @@
 
 Camera::Camera(const glm::vec3& position, const glm::vec3& up, float yaw, float pitch)
     : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(2.5f), MouseSensitivity(0.1f), Zoom(45.0f),
-      NearPlane(0.1f), FarPlane(100.0f)
+      NearPlane(0.1f), FarPlane(100.0f), firstMouse(true), lastX(400.0), lastY(300.0)
 {
     Position = position;
     WorldUp = up;
@@ -27,14 +27,29 @@ glm::mat4 Camera::getProjectionMatrix(float aspectRatio) const {
 
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
     float velocity = MovementSpeed * deltaTime;
-    if (direction == FORWARD)
+    switch (direction)
+    {
+    case FORWARD:
         Position += Front * velocity;
-    if (direction == BACKWARD)
+        break;
+    case BACKWARD:
         Position -= Front * velocity;
-    if (direction == LEFT)
+        break;
+    case LEFT:
         Position -= Right * velocity;
-    if (direction == RIGHT)
+        break;
+    case RIGHT:
         Position += Right * velocity;
+        break;
+    case UP:
+        Position[1] += velocity;
+        break;
+    case DOWN:
+        Position[1] -= velocity;
+        break;
+    default:
+        break;
+    }        
 }
 
 void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPitch) {
@@ -56,6 +71,21 @@ void Camera::processMouseMovement(float xoffset, float yoffset, bool constrainPi
     }
 
     updateCameraVectors();
+}
+
+void Camera::processMouseCallback(double xpos, double ypos) {
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = (float)(xpos - lastX);
+    float yoffset = (float)(lastY - ypos); // 反转 y
+    lastX = xpos;
+    lastY = ypos;
+
+    processMouseMovement(xoffset, yoffset);
 }
 
 void Camera::setPerspective(float fovDegrees, float nearPlane, float farPlane) {

@@ -100,6 +100,7 @@ public:
     virtual void draw(Shader& shader) override;
     virtual ~Point();
     
+    glm::vec3 getPosition() const { return this->position; }
 private:
     GLuint VAO, VBO;
     glm::vec3 position;
@@ -159,6 +160,15 @@ public:
              float x2, float y2, float z2,
              float x3, float y3, float z3,
              const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f));
+    
+    /**
+     * @brief 构造三角形
+     * @param p1..p3 三个顶点位置，基于现有的点
+     * @param color 三角形颜色
+     */
+    Triangle(Point&& p1, Point&& p2, Point&& p3, 
+             const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f)
+    );
 
     /**
      * @brief 绘制三角形
@@ -169,7 +179,7 @@ public:
     
 private:
     GLuint VAO, VBO;
-    glm::vec3 vertices[3];
+    glm::vec3 vertices[3];      // 顶点
 };
 
 // 矩形类
@@ -182,6 +192,9 @@ public:
          float x2, float y2, float z2,
          float x3, float y3, float z3,
          float x4, float y4, float z4,
+         const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f));
+    
+    Quad(Point p1, Point p2, Point p3, Point p4,
          const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f));
 
     /**

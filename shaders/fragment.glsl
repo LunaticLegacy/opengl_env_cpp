@@ -34,11 +34,15 @@ uniform vec3 viewPos;
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec3 Color;
 
 void main()
 {
+    // 使用传入的颜色作为材质的基本颜色
+    vec3 objectColor = Color;
+    
     // 环境光
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = light.ambient * objectColor;
     
     // 漫反射
     vec3 norm = normalize(Normal);
@@ -52,7 +56,7 @@ void main()
     }
     
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * (diff * material.diffuse);
+    vec3 diffuse = light.diffuse * (diff * objectColor);
     
     // 镜面反射
     vec3 viewDir = normalize(viewPos - FragPos);

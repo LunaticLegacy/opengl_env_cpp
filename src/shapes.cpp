@@ -56,12 +56,20 @@ Point::Point(float x, float y, float z, const glm::vec3& color) : ColoredShape(c
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     
+    // 准备顶点数据（位置+颜色）
+    float pointData[6] = {
+        position.x, position.y, position.z,
+        m_color.r, m_color.g, m_color.b
+    };
+    
     // 填充VBO数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(position), &position, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(pointData), pointData, GL_STATIC_DRAW);
     
     // 设置顶点属性指针
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     
     // 解绑VAO
     glBindVertexArray(0);
@@ -73,10 +81,9 @@ Point::Point(float x, float y, float z, const glm::vec3& color) : ColoredShape(c
  *               因此传入的着色器需要定义对应 uniform（model, color）。
  */
 void Point::draw(Shader& shader) {
-    // 上传 model 与 color
+    // 上传 model
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_POINTS, 0, 1);
@@ -108,15 +115,22 @@ Line::Line(float startX, float startY, float startZ,
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     
-    // 准备顶点数据
-    glm::vec3 vertices[2] = {startPoint, endPoint};
+    // 准备顶点数据（位置+颜色）
+    float lineData[12] = {
+        startPoint.x, startPoint.y, startPoint.z,
+        m_color.r, m_color.g, m_color.b,
+        endPoint.x, endPoint.y, endPoint.z,
+        m_color.r, m_color.g, m_color.b
+    };
     
     // 填充VBO数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lineData), lineData, GL_STATIC_DRAW);
     
     // 设置顶点属性指针
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     
     // 解绑VAO
     glBindVertexArray(0);
@@ -129,7 +143,6 @@ Line::Line(float startX, float startY, float startZ,
 void Line::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, 2);
@@ -145,7 +158,8 @@ Line::~Line() {
 Triangle::Triangle(float x1, float y1, float z1,
                    float x2, float y2, float z2,
                    float x3, float y3, float z3,
-                   const glm::vec3& color) : ColoredShape(color) {
+                   const glm::vec3& color) : ColoredShape(color) 
+{
     vertices[0] = glm::vec3(x1, y1, z1);
     vertices[1] = glm::vec3(x2, y2, z2);
     vertices[2] = glm::vec3(x3, y3, z3);
@@ -158,12 +172,70 @@ Triangle::Triangle(float x1, float y1, float z1,
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     
+    // 准备顶点数据（位置+颜色）
+    float triangleData[18];
+    for (int i = 0; i < 3; i++) {
+        triangleData[i*6]     = vertices[i].x;
+        triangleData[i*6 + 1] = vertices[i].y;
+        triangleData[i*6 + 2] = vertices[i].z;
+        triangleData[i*6 + 3] = m_color.r;
+        triangleData[i*6 + 4] = m_color.g;
+        triangleData[i*6 + 5] = m_color.b;
+    }
+    
     // 填充VBO数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleData), triangleData, GL_STATIC_DRAW);
     
     // 设置顶点属性指针
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+/**
+ * @brief 构造三角形
+ * @param p1..p3 三个顶点位置，基于现有的点
+ * @param color 三角形颜色
+ */
+Triangle::Triangle(
+    Point&& p1, Point&& p2, Point&& p3, 
+    const glm::vec3& color) : ColoredShape(color) 
+{
+    this->vertices[0] = p1.getPosition();
+    this->vertices[1] = p2.getPosition();
+    this->vertices[2] = p3.getPosition();
+
+    // 生成并绑定VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 生成并绑定VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    
+    // 准备顶点数据（位置+颜色）
+    float triangleData[18];
+    for (int i = 0; i < 3; i++) {
+        triangleData[i*6]     = vertices[i].x;
+        triangleData[i*6 + 1] = vertices[i].y;
+        triangleData[i*6 + 2] = vertices[i].z;
+        triangleData[i*6 + 3] = m_color.r;
+        triangleData[i*6 + 4] = m_color.g;
+        triangleData[i*6 + 5] = m_color.b;
+    }
+    
+    // 填充VBO数据
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangleData), triangleData, GL_STATIC_DRAW);
+    
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     
     // 解绑VAO
     glBindVertexArray(0);
@@ -176,7 +248,6 @@ Triangle::Triangle(float x1, float y1, float z1,
 void Triangle::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -207,12 +278,65 @@ Quad::Quad(float x1, float y1, float z1,
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     
+    // 准备顶点数据（位置+颜色）
+    float quadData[24];
+    for (int i = 0; i < 4; i++) {
+        quadData[i*6]     = vertices[i].x;
+        quadData[i*6 + 1] = vertices[i].y;
+        quadData[i*6 + 2] = vertices[i].z;
+        quadData[i*6 + 3] = m_color.r;
+        quadData[i*6 + 4] = m_color.g;
+        quadData[i*6 + 5] = m_color.b;
+    }
+    
     // 填充VBO数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_STATIC_DRAW);
     
     // 设置顶点属性指针
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+Quad::Quad(Point p1, Point p2, Point p3, Point p4,
+         const glm::vec3& color) : ColoredShape(color)
+{
+    vertices[0] = p1.getPosition();
+    vertices[1] = p2.getPosition();
+    vertices[2] = p3.getPosition();
+    vertices[3] = p4.getPosition();
+    
+    // 生成并绑定VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 生成并绑定VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    
+    // 准备顶点数据（位置+颜色）
+    float quadData[24];
+    for (int i = 0; i < 4; i++) {
+        quadData[i*6]     = vertices[i].x;
+        quadData[i*6 + 1] = vertices[i].y;
+        quadData[i*6 + 2] = vertices[i].z;
+        quadData[i*6 + 3] = m_color.r;
+        quadData[i*6 + 4] = m_color.g;
+        quadData[i*6 + 5] = m_color.b;
+    }
+    
+    // 填充VBO数据
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_STATIC_DRAW);
+    
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
     
     // 解绑VAO
     glBindVertexArray(0);
@@ -225,7 +349,6 @@ Quad::Quad(float x1, float y1, float z1,
 void Quad::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_QUADS, 0, 4);
@@ -244,52 +367,52 @@ Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
     // 立方体顶点数据（位置+法线）
     float cubeVertices[] = {
         // 前面
-        -halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
-         halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
-         halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
-         halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
-        -halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
-        -halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,
+        -halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
 
         // 左面
-        -halfSize, -halfSize, -halfSize, -1.0f,  0.0f,  0.0f,
-        -halfSize, -halfSize,  halfSize, -1.0f,  0.0f,  0.0f,
-        -halfSize,  halfSize,  halfSize, -1.0f,  0.0f,  0.0f,
-        -halfSize,  halfSize,  halfSize, -1.0f,  0.0f,  0.0f,
-        -halfSize,  halfSize, -halfSize, -1.0f,  0.0f,  0.0f,
-        -halfSize, -halfSize, -halfSize, -1.0f,  0.0f,  0.0f,
+        -halfSize, -halfSize, -halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize,  halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize,  halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize,  halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize, -halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize, -halfSize, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
 
         // 后面
-         halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
-        -halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
-        -halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
-        -halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
-         halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
-         halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,
+         halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize, -halfSize,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
 
         // 右面
-         halfSize, -halfSize,  halfSize,  1.0f,  0.0f,  0.0f,
-         halfSize, -halfSize, -halfSize,  1.0f,  0.0f,  0.0f,
-         halfSize,  halfSize, -halfSize,  1.0f,  0.0f,  0.0f,
-         halfSize,  halfSize, -halfSize,  1.0f,  0.0f,  0.0f,
-         halfSize,  halfSize,  halfSize,  1.0f,  0.0f,  0.0f,
-         halfSize, -halfSize,  halfSize,  1.0f,  0.0f,  0.0f,
+         halfSize, -halfSize,  halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize, -halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize, -halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize, -halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize,  halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize,  halfSize,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
 
         // 上面
-        -halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,
-         halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,
-         halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,
-         halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,
-        -halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,
-        -halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,
+        -halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize, -halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize,  halfSize,  halfSize,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
 
         // 下面
-        -halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,
-         halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,
-         halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,
-         halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,
-        -halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,
-        -halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f
+        -halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b
     };
 
     // 生成并绑定VAO
@@ -304,10 +427,12 @@ Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
 
     // 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // 解绑VAO
     glBindVertexArray(0);
@@ -320,7 +445,6 @@ Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
 void Cube::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -361,6 +485,11 @@ Sphere::Sphere(float radius, int sectors, int stacks, const glm::vec3& color)
             vertices.push_back(normal.x);
             vertices.push_back(normal.y);
             vertices.push_back(normal.z);
+            
+            // 颜色
+            vertices.push_back(m_color.r);
+            vertices.push_back(m_color.g);
+            vertices.push_back(m_color.b);
         }
     }
 
@@ -400,10 +529,12 @@ Sphere::Sphere(float radius, int sectors, int stacks, const glm::vec3& color)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
     // 设置顶点属性指针
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     // 解绑VAO
     glBindVertexArray(0);
@@ -416,7 +547,6 @@ Sphere::Sphere(float radius, int sectors, int stacks, const glm::vec3& color)
 void Sphere::draw(Shader& shader) {
     glm::mat4 model = getModelMatrix();
     shader.setMat4("model", model);
-    shader.setVec3("color", getColor());
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, (unsigned int)indices.size(), GL_UNSIGNED_INT, 0);

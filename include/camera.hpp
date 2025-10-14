@@ -15,7 +15,9 @@ enum Camera_Movement {
     FORWARD,
     BACKWARD,
     LEFT,
-    RIGHT
+    RIGHT,
+    UP,
+    DOWN
 };
 
 /**
@@ -66,6 +68,13 @@ public:
     void processMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
 
     /**
+     * @brief 处理鼠标回调
+     * @param xpos 鼠标当前 X 坐标
+     * @param ypos 鼠标当前 Y 坐标
+     */
+    void processMouseCallback(double xpos, double ypos);
+
+    /**
      * @brief 设置透视投影参数
      * @param fovDegrees 垂直视场角（度）
      * @param nearPlane 近裁剪面距离
@@ -105,6 +114,11 @@ private:
     // 投影参数
     float NearPlane;
     float FarPlane;
+
+    // 鼠标状态跟踪
+    bool firstMouse;
+    double lastX;
+    double lastY;
 
     /**
      * @brief 根据当前 Yaw/Pitch 更新 Front/Right/Up 向量

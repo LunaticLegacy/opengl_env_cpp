@@ -14,8 +14,6 @@
 
 // 全局用于回调的指针（简单处理）
 static Camera* g_camera = nullptr;
-static bool firstMouse = true;
-static double lastX = 400.0, lastY = 300.0;
 
 /**
  * @brief 鼠标移动回调
@@ -27,19 +25,7 @@ static double lastX = 400.0, lastY = 300.0;
  */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     if (!g_camera) return;
-
-    if (firstMouse) {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = (float)(xpos - lastX);
-    float yoffset = (float)(lastY - ypos); // 反转 y
-    lastX = xpos;
-    lastY = ypos;
-
-    g_camera->processMouseMovement(xoffset, yoffset);
+    g_camera->processMouseCallback(xpos, ypos);
 }
 
 int main() {
@@ -50,106 +36,65 @@ int main() {
         // 创建着色器程序
         Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
         shader.use();
+        window.BindShader(&shader);
 
         // 创建摄像机并设置为全局供回调使用
         Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
         camera.setPerspective(45.0f, 0.1f, 100.0f);
+        camera.toggleInvertX();
         g_camera = &camera;
+        window.BindCamera(&camera); // 绑定摄像机到窗口
 
         // 设置鼠标回调（需要 GLFWwindow*）
-        glfwSetInputMode(window.GetGLFWwindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetCursorPosCallback(window.GetGLFWwindow(), mouse_callback);
+        window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        window.SetCursorPosCallback(mouse_callback);
 
         // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
-        camera.toggleInvertX();
-
         float lastFrame = 0.0f;
 
         // 创建一些基本图形对象
-        Point3D point(0.0f, 0.0f, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f)); // 红色点
-        Line line(-0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)); // 绿色线
-        Triangle triangle(0.0f, 0.5f, 0.0f,
-                         -0.5f, -0.5f, 0.0f,
-                          0.5f, -0.5f, 0.0f,
-                          glm::vec3(0.0f, 0.0f, 1.0f)); // 蓝色三角形
+        Point3D* point = new Point3D(0.0f, 0.0f, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f)); // 红色点
+        window.AddShape(point);
+        Line* line = new Line(-0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)); // 绿色线
+        window.AddShape(line);
+
+        Triangle* triangle = new Triangle(
+            0.0f, 0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        ); // 蓝色三角形
+        window.AddShape(triangle);
 
         // 创建增强的3D图形对象
-        Cube cube(0.5f, glm::vec3(1.0f, 1.0f, 0.0f)); // 黄色立方体
-        cube.setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        Cube* cube = new Cube(0.5f, glm::vec3(1.0f, 1.0f, 0.0f)); // 黄色立方体
+        cube->setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        window.AddShape(cube);
         
-        Sphere sphere(0.3f, 36, 18, glm::vec3(1.0f, 0.0f, 1.0f)); // 紫色球体
-        sphere.setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
+        Sphere* sphere = new Sphere(0.3f, 36, 18, glm::vec3(1.0f, 0.2f, 1.0f)); // 紫色球体
+        sphere->setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
+        window.AddShape(sphere);
+        
+        Quad* back_white = new Quad(
+            0.0f, 0.0f, 0.0f,
+            4.0f, 4.0f, 0.0f,
+            0.0f, 4.0f, 0.0f,
+            4.0f, 0.0f, 0.0f,
+            glm::vec3(1.0f, 1.0f, 1.0f)
+        );
+        window.AddShape(back_white);
 
         // 创建光源
-        Light light(POINT_LIGHT, glm::vec3(1.2f, 1.0f, 2.0f));
-        light.setColor(glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f));
+        Sphere* sun = new Sphere(0.5f);
+        sun->setPosition(glm::vec3(1.2f, 1.0f, 2.0f));
+        window.AddShape(sun);
+
+        Light* light = new Light(POINT_LIGHT, glm::vec3(1.2f, 1.0f, 2.0f));
+        light->setColor(glm::vec3(0.2f), glm::vec3(0.5f), glm::vec3(1.0f));
+        window.AddLightSource(light);
+
+        window.Run();
         
-        // 主渲染循环
-        while (!window.ShouldClose()) {
-            float currentFrame = (float)glfwGetTime();
-            float deltaTime = currentFrame - lastFrame;
-            lastFrame = currentFrame;
-
-            // 处理键盘输入（WASD）
-            if (glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_W) == GLFW_PRESS)
-                camera.processKeyboard(FORWARD, deltaTime);
-            if (glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_S) == GLFW_PRESS)
-                camera.processKeyboard(BACKWARD, deltaTime);
-            if (glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_A) == GLFW_PRESS)
-                camera.processKeyboard(LEFT, deltaTime);
-            if (glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_D) == GLFW_PRESS)
-                camera.processKeyboard(RIGHT, deltaTime);
-
-            // 切换鼠标反向：按 V 切换 Y 轴反向；按 B 切换 X 轴反向
-            static int lastVState = GLFW_RELEASE;
-            static int lastBState = GLFW_RELEASE;
-            int vState = glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_V);
-            int bState = glfwGetKey(window.GetGLFWwindow(), GLFW_KEY_B);
-            if (vState == GLFW_PRESS && lastVState == GLFW_RELEASE) {
-                camera.toggleInvertY();
-                std::cout << "InvertY set to " << (camera.isInvertY() ? "ON" : "OFF") << std::endl;
-            }
-            if (bState == GLFW_PRESS && lastBState == GLFW_RELEASE) {
-                camera.toggleInvertX();
-                std::cout << "InvertX set to " << (camera.isInvertX() ? "ON" : "OFF") << std::endl;
-            }
-            lastVState = vState;
-            lastBState = bState;
-
-            // 清屏并准备绘制
-            window.Clear();
-
-            // 使用着色器并绘制所有形状
-            shader.use();
-            // 上传视图与投影矩阵到着色器（uniform 名称需与着色器代码一致）
-            glm::mat4 view = camera.getViewMatrix();
-            glm::mat4 projection = camera.getProjectionMatrix(800.0f / 600.0f);
-            shader.setMat4("view", view);
-            shader.setMat4("projection", projection);
-            
-            // 设置视点位置
-            shader.setVec3("viewPos", camera.Position());
-            
-            // 设置材质属性
-            shader.setVec3("material.ambient",  glm::vec3(1.0f, 0.5f, 0.31f));
-            shader.setVec3("material.diffuse",  glm::vec3(1.0f, 0.5f, 0.31f));
-            shader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-            shader.setFloat("material.shininess", 32.0f);
-            
-            // 设置光源属性
-            light.setUniform(shader.ID, "light");
-
-            // 将 shader 传入各个 shape 的 draw，以便它们内部上传 model 与 color
-            point.draw(shader);
-            line.draw(shader);
-            triangle.draw(shader);
-            cube.draw(shader);
-            sphere.draw(shader);
-
-            // 交换缓冲并处理事件
-            window.SwapBuffers();
-            window.PollEvents();
-        }
     } catch(const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return -1;
