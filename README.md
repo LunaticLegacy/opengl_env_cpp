@@ -4,7 +4,8 @@
 
 目前有在分支上实现什么：
 - 粒子特效，见分支：`firework`
-- 3D引擎，见仓库：`spatial3d`
+- 3D引擎，见分支：`spatial3d`
+- 光效，见分支：`ray_tracing`（这个真的不是光线追踪，OpenGL原生不支持这个）
 
 自学OpenGL 3D，main是一个最基础的模板以及demo内容。如果要搞自己的内容就开个分支。
 
