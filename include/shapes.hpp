@@ -33,6 +33,12 @@ public:
     void setPosition(const glm::vec3& position);
 
     /**
+     * @brief 相对移动图形
+     * @param offset 三维偏移向量 (dx, dy, dz)
+     */
+    void move(const glm::vec3& offset);
+
+    /**
      * @brief 设置旋转（欧拉角）
      * @param rotation Euler 角向量 (pitch, yaw, roll)，单位为度
      */
@@ -224,11 +230,23 @@ public:
      * @param shader 着色器引用，用于设置 model 与 color uniform
      */
     virtual void draw(Shader& shader) override;
+
+    /**
+     * @brief 改变立方体的姿态。TODO：完成该支持。
+     * @param pose 姿态。
+     */
+    void transpose(const glm::vec3& pose);
+
     virtual ~Cube();
 
 private:
     GLuint VAO, VBO;
+
+    // 顶点
     std::vector<float> vertices;
+
+    // 姿态，TODO: 加入姿态变换支持。
+    std::vector<float> pose;
 };
 
 // 球体类

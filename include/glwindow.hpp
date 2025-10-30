@@ -139,6 +139,13 @@ public:
     }
 
     /**
+     * @brief 关闭窗口。
+     */
+    WINDOW_BASIC void Close() {
+        glfwSetWindowShouldClose(m_window, GLFW_TRUE);
+    }
+
+    /**
      * @brief 交换前后缓冲区（将后备缓冲内容呈现到屏幕）
      */
     WINDOW_BASIC void SwapBuffers() {
@@ -188,6 +195,14 @@ public:
     // 主循环
     WINDOW_BASIC void Run() {
         float lastFrame = 0.0f, currentFrame = 0.0f, deltaTime = 0.0f;
+        std::cout << " --------------- " << std::endl;
+        std::cout << "Window started." << std::endl;
+        std::cout << "Press WSAD to move. " << std::endl;
+        std::cout << "Press LShift to dive, press SPACEBAR to float. " << std::endl;
+        std::cout << "Press V to change horizontal mouse behaviour, press B to change horizontal mouse behaviour." << std::endl;
+        std::cout << "Press U and I to change rendering mode." << std::endl;
+        std::cout << "Press ESC to quit." << std::endl;
+        std::cout << " --------------- " << std::endl;
 
         while (!this->ShouldClose()) {
             this->Clear();
@@ -207,7 +222,6 @@ public:
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
             this->key_callback(&deltaTime);
-
 
             // 设置视点位置
             m_shader->setVec3("viewPos", m_camera->Position);
@@ -234,6 +248,8 @@ public:
             this->SwapBuffers();
             this->PollEvents();
         }
+
+        std::cout << "Quit." << std::endl;
     }
 
     // --------------------------- 事件处理 ---------------------------
@@ -325,6 +341,11 @@ private:
         }
         lastUState = uState;
         lastIState = iState;
+
+        // 按ESC以退出。
+        if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(m_window, GLFW_TRUE);
+        }
     }
 
     /**

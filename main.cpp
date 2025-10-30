@@ -31,7 +31,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 int main() {
     try {
         // 创建窗口
-        Window window(1920, 1080, "OpenGL 3D Engine");
+        Window window(1024, 768, "OpenGL 3D Engine");
 
         // 创建着色器程序
         Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -41,14 +41,14 @@ int main() {
         // 创建摄像机并设置为全局供回调使用
         Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
         camera.setPerspective(45.0f, 0.1f, 100.0f);
-        camera.toggleInvertX();
+        camera.toggleInvertX(); // 反转鼠标，让鼠标左右正确
         g_camera = &camera;
         window.BindCamera(&camera); // 绑定摄像机到窗口
 
         // 设置鼠标回调（需要 GLFWwindow*）
         window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         window.SetCursorPosCallback(mouse_callback);
-
+        
         // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
         float lastFrame = 0.0f;
 
@@ -97,9 +97,10 @@ int main() {
         redlight->setColor(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.9f, 0.9f), glm::vec3(1.0f, 0.9f, 0.9f));
         window.AddLightSource(redlight);
 
+        // 进入主循环。
         window.Run();
         
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return -1;
     }

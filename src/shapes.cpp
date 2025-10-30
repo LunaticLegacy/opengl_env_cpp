@@ -16,6 +16,10 @@ void Shape::setPosition(const glm::vec3& position) {
     m_position = position;
 }
 
+void Shape::move(const glm::vec3& offset) {
+    m_position += offset;
+}
+
 void Shape::setRotation(const glm::vec3& rotation) {
     m_rotation = rotation;
 }
@@ -449,6 +453,18 @@ void Cube::draw(Shader& shader) {
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
+}
+
+/**
+ * @brief 移动立方体到指定坐标。
+ * @param pos 坐标位置。
+ */
+/**
+ * @brief 改变立方体的姿态。
+ * @param pose 姿态。
+ */
+void Cube::transpose(const glm::vec3& pose) {
+
 }
 
 Cube::~Cube() {
