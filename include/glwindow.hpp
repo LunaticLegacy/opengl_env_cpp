@@ -83,19 +83,19 @@ public:
         if (!GLCore::is_initialized()) GLCore::Initialize(); // 确保 GLFW 已初始化
         
         // 创建窗口
-        m_window = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
-        if (!m_window) {
+        this->m_window = glfwCreateWindow(m_width, m_height, m_title, nullptr, nullptr);
+        if (!this->m_window) {
             std::cerr << "Failed to create GLFW window\n";
             throw std::runtime_error("GLFW window creation failed");
         }
 
-        glfwMakeContextCurrent(m_window);
+        glfwMakeContextCurrent(this->m_window);
 
         // 初始化 GLEW（只在第一个窗口调用）
         if (!s_glewInitialized) {
             glewExperimental = GL_TRUE;
             if (glewInit() != GLEW_OK) {
-                glfwDestroyWindow(m_window);
+                glfwDestroyWindow(this->m_window);
                 std::cerr << "Failed to initialize GLEW\n";
                 throw std::runtime_error("GLEW init failed");
             }
@@ -108,9 +108,9 @@ public:
     }
 
     WINDOW_BASIC ~Window() {
-        if (m_window) {
-            glfwDestroyWindow(m_window);
-            m_window = nullptr;
+        if (this->m_window) {
+            glfwDestroyWindow(this->m_window);
+            this->m_window = nullptr;
         }
         // GLFW 终止只在最后一个窗口析构时调用
         s_windowCount--;
@@ -127,7 +127,7 @@ public:
      * @return 指向内部 GLFW 窗口对象的指针，可用于注册 GLFW 回调或直接调用 GLFW API
      */
     WINDOW_BASIC GLFWwindow* GetGLFWwindow() const {
-        return m_window;
+        return this->m_window;
     }
 
     /**
@@ -135,21 +135,21 @@ public:
      * @return 如果窗口已收到关闭事件（例如点击关闭按钮）则返回 true
      */
     WINDOW_BASIC bool ShouldClose() const {
-        return glfwWindowShouldClose(m_window);
+        return glfwWindowShouldClose(this->m_window);
     }
 
     /**
      * @brief 关闭窗口。
      */
     WINDOW_BASIC void Close() {
-        glfwSetWindowShouldClose(m_window, GLFW_TRUE);
+        glfwSetWindowShouldClose(this->m_window, GLFW_TRUE);
     }
 
     /**
      * @brief 交换前后缓冲区（将后备缓冲内容呈现到屏幕）
      */
     WINDOW_BASIC void SwapBuffers() {
-        glfwSwapBuffers(m_window);
+        glfwSwapBuffers(this->m_window);
     }
 
     /**
@@ -199,7 +199,7 @@ public:
         std::cout << "Window started." << std::endl;
         std::cout << "Press WSAD to move. " << std::endl;
         std::cout << "Press LShift to dive, press SPACEBAR to float. " << std::endl;
-        std::cout << "Press V to change horizontal mouse behaviour, press B to change horizontal mouse behaviour." << std::endl;
+        std::cout << "Press V to change vertical mouse behaviour, press B to change horizontal mouse behaviour." << std::endl;
         std::cout << "Press U and I to change rendering mode." << std::endl;
         std::cout << "Press ESC to quit." << std::endl;
         std::cout << " --------------- " << std::endl;
@@ -298,24 +298,24 @@ private:
     void key_callback(float* deltaTime) {
 
         // 处理键盘输入（WASD）
-        if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_W) == GLFW_PRESS)
             m_camera->processKeyboard(FORWARD, *deltaTime);
-        if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_S) == GLFW_PRESS)
             m_camera->processKeyboard(BACKWARD, *deltaTime);
-        if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_A) == GLFW_PRESS)
             m_camera->processKeyboard(LEFT, *deltaTime);
-        if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_D) == GLFW_PRESS)
             m_camera->processKeyboard(RIGHT, *deltaTime);
-        if (glfwGetKey(m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_SPACE) == GLFW_PRESS)
             m_camera->processKeyboard(UP, *deltaTime);
-        if (glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        if (glfwGetKey(this->m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
             m_camera->processKeyboard(DOWN, *deltaTime);
 
         // 切换鼠标反向：按 V 切换 Y 轴反向；按 B 切换 X 轴反向
         static int lastVState = GLFW_RELEASE;
         static int lastBState = GLFW_RELEASE;
-        int vState = glfwGetKey(m_window, GLFW_KEY_V);
-        int bState = glfwGetKey(m_window, GLFW_KEY_B);
+        int vState = glfwGetKey(this->m_window, GLFW_KEY_V);
+        int bState = glfwGetKey(this->m_window, GLFW_KEY_B);
         if (vState == GLFW_PRESS && lastVState == GLFW_RELEASE) {
             m_camera->toggleInvertY();
             std::cout << "InvertY set to " << (m_camera->isInvertY() ? "ON" : "OFF") << std::endl;
@@ -330,8 +330,8 @@ private:
         // 渲染模式切换
         static int lastUState = GLFW_RELEASE;
         static int lastIState = GLFW_RELEASE;
-        int uState = glfwGetKey(m_window, GLFW_KEY_U);
-        int iState = glfwGetKey(m_window, GLFW_KEY_I);
+        int uState = glfwGetKey(this->m_window, GLFW_KEY_U);
+        int iState = glfwGetKey(this->m_window, GLFW_KEY_I);
         
         if (uState == GLFW_PRESS && lastUState == GLFW_RELEASE) {
             cycleRenderModeForward();
@@ -343,8 +343,8 @@ private:
         lastIState = iState;
 
         // 按ESC以退出。
-        if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-            glfwSetWindowShouldClose(m_window, GLFW_TRUE);
+        if (glfwGetKey(this->m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(this->m_window, GLFW_TRUE);
         }
     }
 
