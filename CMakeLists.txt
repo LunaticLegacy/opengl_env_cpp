@@ -39,19 +39,34 @@ target_link_libraries(opengl_test
     opengl_engine
 )
 
-# 复制DLL文件
-set(ALL_DLL_FILES
-    "${CMAKE_SOURCE_DIR}/lib/glew-2.2.0/bin/Release/x64/glew32.dll"
-    "${CMAKE_SOURCE_DIR}/lib/glfw-3.4.bin.WIN64/lib-mingw-w64/glfw3.dll"
-)
+# 库
+set(GLEW_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/glew/lib/Release/x64/libglew32.a")
+# 注意：GLFW 是静态链接库，不需要 DLL
+# set(GLFW_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/glfw/src/libglfw3.a")
 
-foreach(dll_file ${ALL_DLL_FILES})
+# 动态库
+set(GLEW_DLL_PATH "${CMAKE_SOURCE_DIR}/lib/glew/bin/Release/x64/glew32.dll")
+# GLFW 不提供预编译的 DLL，需要自己编译或使用静态链接
+# set(GLFW_DLL_PATH "${CMAKE_SOURCE_DIR}/lib/glfw/lib-mingw-w64/glfw3.dll")
+
+
+# 复制DLL文件（如果存在）
+if(EXISTS ${GLEW_DLL_PATH})
     add_custom_command(TARGET opengl_test POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${dll_file}"
+        "${GLEW_DLL_PATH}"
         $<TARGET_FILE_DIR:opengl_test>
     )
-endforeach()
+endif()
+
+# 注释掉 GLFW DLL 复制部分，因为 GLFW 使用静态链接
+# if(EXISTS ${GLFW_DLL_PATH})
+#     add_custom_command(TARGET opengl_test POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#         "${GLFW_DLL_PATH}"
+#         $<TARGET_FILE_DIR:opengl_test>
+#     )
+#endif()
 
 # 复制着色器文件到构建目录
 configure_file(shaders/vertex.glsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/vertex.glsl COPYONLY)

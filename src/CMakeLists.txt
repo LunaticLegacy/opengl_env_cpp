@@ -39,14 +39,25 @@ else()
 endif()
 
 # 链接外部库
-link_directories(
-    "${CMAKE_SOURCE_DIR}/lib/glew/lib/Release/x64"
-    "${CMAKE_SOURCE_DIR}/lib/glfw/src"
-)
+# 根据编译器类型选择合适的库文件
+if (WIN32 AND NOT MSVC)
+    # 使用MinGW编译时链接静态库
+    target_link_libraries(opengl_engine 
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/lib/glew/lib/Release/x64/glew32.lib
+        ${CMAKE_SOURCE_DIR}/lib/glfw/build/src/libglfw3.a
+        opengl32
+    )
+else()
+    # 使用MSVC编译时链接导入库
+    link_directories(
+        "${CMAKE_SOURCE_DIR}/lib/glew/lib/Release/x64"
+    )
 
-target_link_libraries(opengl_engine 
-    PUBLIC
-    glew32
-    glfw3
-    opengl32
-)
+    target_link_libraries(opengl_engine 
+        PUBLIC
+        glew32
+        glfw3
+        opengl32
+    )
+endif()
