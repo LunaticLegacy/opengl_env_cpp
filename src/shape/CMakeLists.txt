@@ -1,9 +1,7 @@
 # src/shape/CMakeLists.txt
 
 # 收集shape模块的源文件
-set(SHAPE_SOURCES
-    shapes.cpp
-)
+file(GLOB SHAPE_SOURCES *.cpp)
 
 # 创建对象库
 add_library(shape_lib OBJECT
