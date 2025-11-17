@@ -368,7 +368,7 @@ Quad::~Quad() {
 Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
     float halfSize = size / 2.0f;
     
-    // 立方体顶点数据（位置+法线）
+    // 立方体顶点数据（位置+法线），324 * 4 = 1296 bytes
     float cubeVertices[] = {
         // 前面
         -halfSize, -halfSize,  halfSize,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
@@ -417,6 +417,84 @@ Cube::Cube(float size, const glm::vec3& color) : ColoredShape(color) {
          halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
         -halfSize, -halfSize,  halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
         -halfSize, -halfSize, -halfSize,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b
+    };
+
+    // 生成并绑定VAO
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 生成并绑定VBO
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // 填充VBO数据
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+
+    // 设置顶点属性指针
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    // 解绑VAO
+    glBindVertexArray(0);
+}
+
+Cube::Cube(glm::vec3& size, const glm::vec3& color) : ColoredShape(color) {
+    // 坐标。
+    float half_x = size[0] / 2.0f, half_y = size[1] / 2.0f, half_z = size[2] / 2.0f;
+
+    // 立方体顶点数据（位置+法线）
+        float cubeVertices[] = {
+        // 前面 (z = +half_z)
+        -half_x, -half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
+
+        // 左面 (x = -half_x)
+        -half_x, -half_y, -half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y,  half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y,  half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y,  half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y, -half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y, -half_z, -1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+
+        // 后面 (z = -half_z)
+         half_x, -half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y, -half_z,  0.0f,  0.0f, -1.0f,  m_color.r, m_color.g, m_color.b,
+
+        // 右面 (x = +half_x)
+         half_x, -half_y,  half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y, -half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y, -half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y, -half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y,  half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y,  half_z,  1.0f,  0.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+
+        // 上面 (y = +half_y)
+        -half_x,  half_y,  half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y,  half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y, -half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x,  half_y, -half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y, -half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x,  half_y,  half_z,  0.0f,  1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+
+        // 下面 (y = -half_y)
+        -half_x, -half_y, -half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y, -half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y,  half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+         half_x, -half_y,  half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y,  half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
+        -half_x, -half_y, -half_z,  0.0f, -1.0f,  0.0f,  m_color.r, m_color.g, m_color.b,
     };
 
     // 生成并绑定VAO

@@ -90,4 +90,26 @@ public:
      * @param outerAngle 外切光角（角度）
      */
     void setSpotAngle(float innerAngle, float outerAngle);
+
+    /**
+     * @brief 设置光源位置
+     * @param _position 新位置
+     */
+    void SetPosition(const glm::vec3& _position) { position = _position; }
+
+    /**
+     * @brief 获取光源位置
+     */
+    glm::vec3 GetPosition() const { return position; }
+
+    /**
+     * @brief 设置光源方向
+     * @param _direction 新方向
+     */
+    void SetDirection(const glm::vec3& _direction) { direction = _direction; }
+
+    /**
+     * @brief 获取光源方向
+     */
+    glm::vec3 GetDirection() const { return direction; }
 };
