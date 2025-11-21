@@ -12,119 +12,92 @@
 #include "camera.hpp"
 #include "light.hpp"
 
-// Global camera pointer used by the GLFW callbacks
+// 全局用于回调的指针（简单处理）
 static Camera* g_camera = nullptr;
 
-// 使用一个全局的物体管理器，创建物体。
-ObjectManager& objectManager = ObjectManager::GetInstance();
-
 /**
- * 设置鼠标回调
+ * @brief 鼠标移动回调
+ * @param window 触发事件的 GLFWwindow*（可用于额外查询输入状态）
+ * @param xpos 鼠标当前 X 坐标（像素，相对于窗口左上角）
+ * @param ypos 鼠标当前 Y 坐标（像素，相对于窗口左上角）
+ *
+ * 回调会把鼠标偏移量传入全局摄像机对象的 processMouseMovement。
  */
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     if (!g_camera) return;
     g_camera->processMouseCallback(xpos, ypos);
 }
 
-/**
- * 设置Shader
- */
-void configureShader(Window& window, Shader& shader) {
-    shader.use();
-    window.BindShader(&shader);
-}
-
-/**
- * 设置摄像机
- */
-void setupCamera(Window& window, Camera& camera) {
-    camera.setPerspective(45.0f, 0.1f, 100.0f);
-    camera.toggleInvertX(); // keep mouse left/right natural
-    g_camera = &camera;
-    window.BindCamera(&camera);
-    window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    window.SetCursorPosCallback(mouse_callback);
-}
-
-/**
- * 对窗口创建图形
- */
-void addBasicShapes(Window& window) {
-    auto point = std::make_shared<Point3D>(0.0f, 0.0f, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    auto pointObj = std::make_shared<GeometryObject>(glm::vec3(0.0, 0.0, 0.0), point);
-    window.AddShape(std::move(point));
-    objectManager.AddObject(std::move(pointObj));
-
-    auto line = std::make_shared<Line>(-0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-    auto lineObj = std::make_shared<GeometryObject>(glm::vec3(0.0, 0.0, 0.0), line);
-    window.AddShape(std::move(line));
-    objectManager.AddObject(std::move(lineObj));
-
-    auto triangle = std::make_shared<Triangle>(
-        0.0f, 0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
-    auto triangleObj = std::make_shared<GeometryObject>(glm::vec3(0.0, 0.0, 0.0), triangle);
-    window.AddShape(std::move(triangle));
-    objectManager.AddObject(std::move(triangleObj));
-
-    auto cube = std::make_shared<Cube>(0.5f, glm::vec3(1.0f, 1.0f, 0.0f));
-    cube->setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
-    auto cubeObj = std::make_shared<GeometryObject>(glm::vec3(1.0, 0.0, 0.0), cube);
-    window.AddShape(std::move(cube));
-    objectManager.AddObject(std::move(cubeObj));
-    
-    auto sphere = std::make_shared<Sphere>(0.3f, 36, 18, glm::vec3(1.0f, 0.2f, 1.0f));
-    sphere->setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
-    auto sphereObj = std::make_shared<GeometryObject>(glm::vec3(-1.0, 0.0, 0.0), sphere);
-    window.AddShape(std::move(sphere));
-    objectManager.AddObject(std::move(sphereObj));
-    
-}
-
-/**
- * 设置光源
- */
-void addLightSources(Window& window) {
-
-    auto whitelight = std::make_shared<Light>(POINT_LIGHT, glm::vec3(1.2f, -2.0f, 2.0f));
-    whitelight->setColor(glm::vec3(1.0f), glm::vec3(0.9f), glm::vec3(0.9f));
-    window.AddLightSource(std::move(whitelight));
-
-    auto redlight = std::make_shared<Light>(POINT_LIGHT, glm::vec3(-1.2f, 2.0f, -1.0f));
-    redlight->setColor(
-        glm::vec3(1.0f, 0.0f, 0.0f),
-        glm::vec3(1.0f, 0.9f, 0.9f),
-        glm::vec3(1.0f, 0.9f, 0.9f)
-    );
-    auto redlightObj = std::make_shared<LightObject>(glm::vec3(1.2f, -2.0f, 2.0f), redlight);
-    window.AddLightSource(std::move(redlight));
-    objectManager.AddObject(redlightObj);
-}
-
-/**
- * 场景启动
- */
-void setupScene(Window& window) {
-    addBasicShapes(window);
-    // addLightSources(window);
-}
-
 int main() {
     try {
-        // 创建窗口、渲染器和摄像机
+        // 创建窗口
         Window window(1024, 768, "OpenGL 3D Engine");
 
+        // 创建着色器程序
         Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-        configureShader(window, shader);
+        shader.use();
+        window.BindShader(&shader);
 
+        // 创建摄像机并设置为全局供回调使用
         Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-        setupCamera(window, camera);
+        camera.setPerspective(45.0f, 0.1f, 100.0f);
+        camera.toggleInvertX(); // 反转鼠标，让鼠标左右正确
+        g_camera = &camera;
+        window.BindCamera(&camera); // 绑定摄像机到窗口
 
-        setupScene(window);
+        // 设置鼠标回调（需要 GLFWwindow*）
+        window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        window.SetCursorPosCallback(mouse_callback);
+        
+        // 可根据个人习惯初始化鼠标反向（如需默认反向可取消注释）
+        float lastFrame = 0.0f;
 
+        // 创建一些基本图形对象
+        Point3D* point = new Point3D(0.0f, 0.0f, 0.0f, glm::vec3(1.0f, 0.0f, 0.0f)); // 红色点
+        window.AddShape(point);
+        Line* line = new Line(-0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, glm::vec3(0.0f, 1.0f, 0.0f)); // 绿色线
+        window.AddShape(line);
+
+        Triangle* triangle = new Triangle(
+            0.0f, 0.5f, 0.0f,
+            -0.5f, -0.5f, 0.0f,
+            0.5f, -0.5f, 0.0f,
+            glm::vec3(0.0f, 0.0f, 1.0f)
+        ); // 蓝色三角形
+        window.AddShape(triangle);
+
+        // 创建增强的3D图形对象
+        Cube* cube = new Cube(0.5f, glm::vec3(1.0f, 1.0f, 0.0f)); // 黄色立方体
+        cube->setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
+        window.AddShape(cube);
+        
+        Sphere* sphere = new Sphere(0.3f, 36, 18, glm::vec3(1.0f, 0.2f, 1.0f)); // 紫色球体
+        sphere->setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
+        window.AddShape(sphere);
+        
+        Quad* back_white = new Quad(
+            0.0f, 0.0f, 0.0f,
+            4.0f, 4.0f, 0.0f,
+            0.0f, 4.0f, 0.0f,
+            4.0f, 0.0f, 0.0f,
+            glm::vec3(1.0f, 1.0f, 1.0f)
+        );
+        window.AddShape(back_white);
+
+        // 创建光源
+        Sphere* sun = new Sphere(0.5f);
+        sun->setPosition(glm::vec3(1.2f, -2.0f, 2.0f));
+        window.AddShape(sun);
+
+        Light* whitelight = new Light(POINT_LIGHT, glm::vec3(1.2f, -2.0f, 2.0f));
+        whitelight->setColor(glm::vec3(1.0f), glm::vec3(0.9), glm::vec3(0.9));
+        window.AddLightSource(whitelight);
+
+        Light* redlight = new Light(POINT_LIGHT, glm::vec3(-1.2f, 2.0f, -1.0f));
+        redlight->setColor(glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.9f, 0.9f), glm::vec3(1.0f, 0.9f, 0.9f));
+        window.AddLightSource(redlight);
+
+        // 进入主循环。
         window.Run();
         
     } catch (const std::exception& e) {

@@ -1,10 +1,10 @@
 # src/basic/CMakeLists.txt
 
 # 收集basic模块的源文件
-file(GLOB BASIC_SOURCES
-    *.cpp
+set(BASIC_SOURCES
+    camera.cpp
+    shader.cpp
 )
-
 
 # 创建对象库
 add_library(basic_lib OBJECT
