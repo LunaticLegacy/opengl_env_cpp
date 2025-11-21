@@ -3,7 +3,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
 #include "shader.hpp"
 
 // 基础图形类
@@ -226,8 +225,6 @@ public:
      */
     Cube(float size, const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f));
 
-    Cube(glm::vec3& size, const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f));
-
     /**
      * @brief 绘制立方体
      * @param shader 着色器引用，用于设置 model 与 color uniform
@@ -251,7 +248,6 @@ private:
     // 姿态，TODO: 加入姿态变换支持。
     std::vector<float> pose;
 };
-
 
 // 球体类
 class Sphere : public ColoredShape {
