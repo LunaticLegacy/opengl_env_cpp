@@ -29,3 +29,24 @@ private:
     GLuint VAO, VBO;
     int m_samples;
 };
+
+// ControlLines: 在相邻控制点之间绘制直线连接
+class ControlLines : public ColoredShape {
+public:
+    ControlLines(const glm::vec3& color = glm::vec3(0.5f, 0.5f, 0.5f));
+    ~ControlLines();
+
+    // 设置控制点并重建 VBO
+    void SetControlPoints(const std::vector<glm::vec3>& controlPoints);
+
+    // 重新构建顶点缓冲
+    void Rebuild();
+
+    // draw 实现：绘制为线条
+    virtual void draw(Shader& shader) override;
+
+private:
+    std::vector<glm::vec3> m_controlPoints;
+    std::vector<float> m_vertices; // 每顶点: position(3) normal(3) color(3)
+    GLuint VAO, VBO;
+};

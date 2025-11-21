@@ -21,13 +21,7 @@
 #include "shape/object_manager.hpp"
 #include "shape/objects.hpp"
 #include "shape/bezier.hpp"
-
-// 添加GLM的相交检测功能
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/intersect.hpp>
-#include "shape/object_manager.hpp"
-#include "shape/objects.hpp"
-#include "shape/bezier.hpp"
+#include "shape/nurbs.hpp"
 
 // 添加GLM的相交检测功能
 #define GLM_ENABLE_EXPERIMENTAL
@@ -42,13 +36,10 @@ class GLCore {
 public:
     // 初始化 GLFW（只调用一次）
     static void Initialize();
-    static void Initialize();
 
     // 终止 GLFW（在程序结束时调用一次）
     static void Shutdown();
-    static void Shutdown();
 
-    static bool is_initialized();
     static bool is_initialized();
 
 private:
@@ -58,7 +49,6 @@ private:
 #define WINDOW_BASIC                // 窗口基本功能
 #define WINDOW_CALLBACK_MANAGER     // 窗口回调函数管理
 #define WINDOW_KEY_MANAGER          // 按键管理
-#define WINDOW_KEY_MANAGER          // 按键管理
 
 // 渲染模式枚举
 enum class RenderMode {
@@ -66,21 +56,6 @@ enum class RenderMode {
     RASTERIZED_RESULT = 1,       // 光栅化后结果
     FRAGMENT_SHADER_RESULT = 2,  // 片段着色后结果
     FINAL_RESULT = 3             // 最终处理结果
-};
-
-// 聊天框内容。
-enum class MessageType {
-    NONE,
-    INFO,
-    WARN,
-    ERROR
-};
-
-struct HudMessage {
-    std::string text;
-    MessageType type;
-    float life;      // 剩余寿命（秒）
-    float totalLife; // 总寿命（用来算透明度）
 };
 
 // 聊天框内容。
@@ -111,9 +86,6 @@ public:
     WINDOW_BASIC explicit Window(int width = 800, int height = 600, const char* title = "OpenGL Window");
 
     WINDOW_BASIC ~Window();
-    WINDOW_BASIC explicit Window(int width = 800, int height = 600, const char* title = "OpenGL Window");
-
-    WINDOW_BASIC ~Window();
 
     // ---------------------- 基本窗口和渲染 ----------------------
 
@@ -122,25 +94,21 @@ public:
      * @return 指向内部 GLFW 窗口对象的指针，可用于注册 GLFW 回调或直接调用 GLFW API
      */
     WINDOW_BASIC GLFWwindow* GetGLFWwindow() const;
-    WINDOW_BASIC GLFWwindow* GetGLFWwindow() const;
 
     /**
      * @brief 检查窗口是否请求关闭
      * @return 如果窗口已收到关闭事件（例如点击关闭按钮）则返回 true
      */
     WINDOW_BASIC bool ShouldClose() const;
-    WINDOW_BASIC bool ShouldClose() const;
 
     /**
      * @brief 关闭窗口。
      */
     WINDOW_BASIC void Close();
-    WINDOW_BASIC void Close();
 
     /**
      * @brief 交换前后缓冲区（将后备缓冲内容呈现到屏幕）
      */
-    WINDOW_BASIC void SwapBuffers();
     WINDOW_BASIC void SwapBuffers();
 
     /**
@@ -206,10 +174,8 @@ public:
      * 本实现会使用固定的背景颜色并清除颜色与深度缓冲。若需自定义背景色请修改此方法或在外部调用 glClearColor
      */
     WINDOW_BASIC void Clear();
-    WINDOW_BASIC void Clear();
 
     // 主循环
-    WINDOW_BASIC void Run();
     WINDOW_BASIC void Run();
 
     // --------------------------- 事件处理 ---------------------------
@@ -219,19 +185,15 @@ public:
      * 通常在每帧末尾调用以处理回调和更新内部事件队列。
      */
     WINDOW_CALLBACK_MANAGER void PollEvents();
-    WINDOW_CALLBACK_MANAGER void PollEvents();
 
     WINDOW_CALLBACK_MANAGER void SetInputMode(int mode, int value);
-    WINDOW_CALLBACK_MANAGER void SetInputMode(int mode, int value);
 
-    WINDOW_CALLBACK_MANAGER void SetCursorPosCallback(GLFWcursorposfun&& mouse_callback);
     WINDOW_CALLBACK_MANAGER void SetCursorPosCallback(GLFWcursorposfun&& mouse_callback);
 
 
 private:
     ObjectManager& objectManager = ObjectManager::GetInstance(); // 物体管理器。
 
-    ObjectManager& objectManager = ObjectManager::GetInstance(); // 物体管理器。
 
     int m_width;            // 当前窗口宽
     int m_height;           // 当前窗口高
@@ -240,8 +202,6 @@ private:
     Shader* m_shader;         // 使用的着色器
     Camera* m_camera;         // 当前主镜头
 
-    std::vector<std::shared_ptr<ColoredShape>> m_shape_list;  // 形状列表
-    std::vector<std::shared_ptr<Light>> m_light_list;         // 光源列表
     std::vector<std::shared_ptr<ColoredShape>> m_shape_list;  // 形状列表
     std::vector<std::shared_ptr<Light>> m_light_list;         // 光源列表
 
@@ -254,11 +214,6 @@ private:
     // Crosshair GL objects (modern OpenGL, core profile compatible)
     unsigned int m_crossVAO = 0;
     unsigned int m_crossVBO = 0;
-    
-    // Crosshair GL objects (modern OpenGL, core profile compatible)
-    unsigned int m_crossVAO = 0;
-    unsigned int m_crossVBO = 0;
-
     // 控制台输出时间间隔
     float m_lastCameraOutput;
 
@@ -268,25 +223,19 @@ private:
     std::shared_ptr<LightObject> m_controlling_light = nullptr;     // 对控制的物体的描边
     uint64_t m_light_oid = 0;
 
+    int m_nurbsDegree = 9999999; // NURBS曲线的最大度数
+
+    enum class CurveDisplayMode { BEZIER = 0, BSPLINE = 1, NURBS = 2 };
+    CurveDisplayMode m_curveDisplay = CurveDisplayMode::BEZIER;
+    float m_fps = 0.0f;
+    double m_lastFpsTime = 0.0;
+    int m_frameCounter = 0;
+    int m_currentDegree = 0;
+
     /**
      * @brief 私有函数：键盘行为。
      * @param lastFrame (float*): 用于表达最后一帧的时点。
      */
-    WINDOW_KEY_MANAGER void key_callback(float* deltaTime);
-
-    WINDOW_KEY_MANAGER void key_callback_moving(float* deltaTime);
-
-    WINDOW_KEY_MANAGER void key_callback_mouse_inverse();
-
-    WINDOW_KEY_MANAGER void key_callback_render_change();
-
-    WINDOW_KEY_MANAGER void key_callback_quit();
-
-    WINDOW_KEY_MANAGER void key_callback_ray_casting();
-
-    WINDOW_KEY_MANAGER void key_callback_debug_print();
-
-    WINDOW_KEY_MANAGER void key_callback_bezier();
     WINDOW_KEY_MANAGER void key_callback(float* deltaTime);
 
     WINDOW_KEY_MANAGER void key_callback_moving(float* deltaTime);
@@ -312,7 +261,6 @@ private:
      * @brief 向前循环切换渲染模式
      */
     void cycleRenderModeForward();
-    void cycleRenderModeForward();
 
     /**
      * @brief 向后循环切换渲染模式
@@ -329,16 +277,12 @@ private:
      * 这是一个统一的枪逻辑。
      */
     std::shared_ptr<Object> castRayAndDetectObjects();
-    void cycleRenderModeBackward();
 
-    /**
-     * @brief 绘制屏幕中央的准星
-     */
-    void drawCrosshair();
+    void updateCurveVisibility(bool showBezier, bool showBSpline, bool showNURBS);
+    
+    // Bezier曲线相关函数
+    void updateCurve();
+    std::shared_ptr<NURBSCurve> updateNurbsShape(const std::string& name, const glm::vec3& color, const std::vector<float>& weights);
+    void updateBezierPieces(const std::vector<std::vector<glm::vec3>>& pieces);
 
-    /**
-     * @brief 射线投射并检测物体，返回被检测到的物体。
-     * 这是一个统一的枪逻辑。
-     */
-    std::shared_ptr<Object> castRayAndDetectObjects();
 };

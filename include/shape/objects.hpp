@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "shape/shapes.hpp"
+#include "light/light.hpp"
 
 // ============================================================================
 // 对象基类 - 所有可绘制的游戏对象的基类
@@ -252,18 +253,17 @@ public:
     /**
      * @brief 构造灯光对象
      */
-    LightObject(const glm::vec3& pos, std::shared_ptr<class Light> light);
+    LightObject(const glm::vec3& pos, std::shared_ptr<Light> light);
 
     /**
      * @brief 获取灯光
      */
-    std::shared_ptr<class Light> GetLight() const { return m_light; }
+    std::shared_ptr<Light> GetLight() const { return m_light; }
 
     virtual void Draw(Shader& shader) override;
 
     virtual std::string GetTypeName() const override { return "LightObject"; }
 
 private:
-    std::shared_ptr<class Light> m_light;
+    std::shared_ptr<Light> m_light;
 };
-

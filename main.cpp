@@ -109,13 +109,13 @@ void addLightSources(Window& window) {
  */
 void setupScene(Window& window) {
     addBasicShapes(window);
-    addLightSources(window);
+    // addLightSources(window);
 }
 
 int main() {
     try {
         // 创建窗口、渲染器和摄像机
-        Window window(1920, 1080, "OpenGL 3D Engine");
+        Window window(1024, 768, "OpenGL 3D Engine");
 
         Shader shader("shaders/vertex.glsl", "shaders/fragment.glsl");
         configureShader(window, shader);

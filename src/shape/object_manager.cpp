@@ -19,11 +19,13 @@
 // ============================================================================
 
 void ObjectManager::AddObject(std::shared_ptr<Object> obj) {
+    // 增加物体。
     if (!obj) return;
     m_objects.push_back(obj);
 }
 
 bool ObjectManager::RemoveObjectByID(uint64_t id) {
+    // 根据物体ID，删除物体。
     auto it = std::find_if(m_objects.begin(), m_objects.end(), 
         [id](const std::shared_ptr<Object>& obj) { return obj->GetID() == id; });
     
@@ -36,6 +38,7 @@ bool ObjectManager::RemoveObjectByID(uint64_t id) {
 }
 
 bool ObjectManager::RemoveObjectByName(const std::string& name) {
+    // 根据物体名称，删除物体。
     auto it = std::find_if(m_objects.begin(), m_objects.end(),
         [&name](const std::shared_ptr<Object>& obj) { return obj->GetName() == name; });
     
@@ -48,11 +51,13 @@ bool ObjectManager::RemoveObjectByName(const std::string& name) {
 }
 
 void ObjectManager::RemoveAllObjects() {
+    // 删除所有物体。
     m_objects.clear();
     m_objectTags.clear();
 }
 
 std::shared_ptr<Object> ObjectManager::GetObjectByID(uint64_t id) const {
+    // 根据物体ID获取物体。
     auto it = std::find_if(m_objects.begin(), m_objects.end(),
         [id](const std::shared_ptr<Object>& obj) { return obj->GetID() == id; });
     
@@ -60,6 +65,7 @@ std::shared_ptr<Object> ObjectManager::GetObjectByID(uint64_t id) const {
 }
 
 std::shared_ptr<Object> ObjectManager::GetObjectByName(const std::string& name) const {
+    // 根据物体名获取物体。
     auto it = std::find_if(m_objects.begin(), m_objects.end(),
         [&name](const std::shared_ptr<Object>& obj) { return obj->GetName() == name; });
     
@@ -67,6 +73,7 @@ std::shared_ptr<Object> ObjectManager::GetObjectByName(const std::string& name) 
 }
 
 void ObjectManager::UpdateAll(float deltaTime) {
+    // 更新全部物体，要求：活跃。
     for (auto& obj : m_objects) {
         if (obj->IsActive()) {
             obj->Update(deltaTime);
@@ -75,6 +82,7 @@ void ObjectManager::UpdateAll(float deltaTime) {
 }
 
 void ObjectManager::DrawAll(Shader& shader) {
+    // 绘制全部物体，要求：活跃且可视。
     for (auto& obj : m_objects) {
         if (obj->IsActive() && obj->IsVisible()) {
             obj->Draw(shader);
@@ -83,6 +91,7 @@ void ObjectManager::DrawAll(Shader& shader) {
 }
 
 std::vector<std::shared_ptr<Object>> ObjectManager::GetObjectsByTypeName(const std::string& typeName) const {
+    // 根据类型名获取物体，返回所有符合的。
     std::vector<std::shared_ptr<Object>> result;
     for (const auto& obj : m_objects) {
         if (obj->GetTypeName() == typeName) {
@@ -94,6 +103,7 @@ std::vector<std::shared_ptr<Object>> ObjectManager::GetObjectsByTypeName(const s
 
 std::vector<std::shared_ptr<Object>> ObjectManager::GetActiveObjects() const {
     std::vector<std::shared_ptr<Object>> result;
+    // 遍历所有活跃的物体。
     for (const auto& obj : m_objects) {
         if (obj->IsActive()) {
             result.push_back(obj);
@@ -104,6 +114,7 @@ std::vector<std::shared_ptr<Object>> ObjectManager::GetActiveObjects() const {
 
 std::vector<std::shared_ptr<Object>> ObjectManager::GetVisibleObjects() const {
     std::vector<std::shared_ptr<Object>> result;
+    // 遍历所有可见的物体。
     for (const auto& obj : m_objects) {
         if (obj->IsVisible()) {
             result.push_back(obj);
@@ -119,10 +130,12 @@ std::shared_ptr<Object> ObjectManager::RayCast(const glm::vec3& rayOrigin, const
     for (auto& obj : m_objects) {
         if (!obj->IsActive() || !obj->IsVisible()) continue;
 
+        // 根据目标包围球范围进行选择。
         glm::vec3 sphereCenter = obj->GetBoundingSphereCentre();
         float sphereRadius = obj->GetBoundingSphereRadius();
 
         float distance;
+        // 调度射线和球相切的函数，储存在distance里。
         if (glm::intersectRaySphere(rayOrigin, rayDirection, sphereCenter, sphereRadius, distance)) {
             if (distance > 0.0f && distance < closestDistance) {
                 closestDistance = distance;
@@ -130,11 +143,12 @@ std::shared_ptr<Object> ObjectManager::RayCast(const glm::vec3& rayOrigin, const
             }
         }
     }
-
+    // 返回最近的物体。
     return closestObject;
 }
 
 std::vector<std::shared_ptr<Object>> ObjectManager::GetVisibleObjectsInFrustum(const Camera& camera, float aspectRatio) {
+    // 是否在视锥体内？
     std::vector<std::shared_ptr<Object>> result;
     
     glm::mat4 projection = camera.getProjectionMatrix(aspectRatio);
@@ -163,6 +177,7 @@ std::vector<std::shared_ptr<Object>> ObjectManager::GetVisibleObjectsInFrustum(c
 }
 
 std::vector<std::shared_ptr<Object>> ObjectManager::GetObjectsInRadius(const glm::vec3& center, float radius) {
+    // 获取给定中心、特定范围内的物体
     std::vector<std::shared_ptr<Object>> result;
     float radiusSq = radius * radius;
 
@@ -181,6 +196,7 @@ std::vector<std::shared_ptr<Object>> ObjectManager::GetObjectsInRadius(const glm
 }
 
 bool ObjectManager::CheckCollision(const Object& obj1, const Object& obj2) {
+    // 碰撞检测
     glm::vec3 center1 = obj1.GetBoundingSphereCentre();
     glm::vec3 center2 = obj2.GetBoundingSphereCentre();
     float radius1 = obj1.GetBoundingSphereRadius();
@@ -192,7 +208,7 @@ bool ObjectManager::CheckCollision(const Object& obj1, const Object& obj2) {
 
 std::vector<std::shared_ptr<Object>> ObjectManager::CheckCollisionsWithObject(const Object& obj) {
     std::vector<std::shared_ptr<Object>> collisions;
-
+    // 对某物体进行碰撞检测
     for (auto& other : m_objects) {
         if (other->GetID() == obj.GetID()) continue;
         if (!other->IsActive()) continue;
@@ -206,6 +222,7 @@ std::vector<std::shared_ptr<Object>> ObjectManager::CheckCollisionsWithObject(co
 }
 
 void ObjectManager::TagObject(uint64_t id, const std::string& tag) {
+    // 打表亲啊
     auto it = std::find_if(m_objects.begin(), m_objects.end(),
         [id](const std::shared_ptr<Object>& obj) { return obj->GetID() == id; });
     
@@ -219,6 +236,7 @@ void ObjectManager::TagObject(uint64_t id, const std::string& tag) {
 }
 
 void ObjectManager::UntagObject(uint64_t id, const std::string& tag) {
+    // 取消标签
     auto tagMapIt = m_objectTags.find(id);
     if (tagMapIt != m_objectTags.end()) {
         auto& tags = tagMapIt->second;

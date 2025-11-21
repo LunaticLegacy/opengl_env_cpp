@@ -1,4 +1,5 @@
 #include "shape/bezier.hpp"
+#include "shape/objects.hpp"
 #include "shader.hpp"
 #include <GL/glew.h>
 #include <glm/gtc/matrix_transform.hpp>

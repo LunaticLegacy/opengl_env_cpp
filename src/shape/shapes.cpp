@@ -490,6 +490,7 @@ Cube::Cube(glm::vec3& size, const glm::vec3& color) : ColoredShape(color) {
     float half_x = size[0] / 2.0f, half_y = size[1] / 2.0f, half_z = size[2] / 2.0f;
 
     // 立方体顶点数据（位置+法线）
+    // [ Px, Py, Pz,   Nx, Ny, Nz,   R, G, B ]  位置，法线，颜色
         float cubeVertices[] = {
         // 前面 (z = +half_z)
         -half_x, -half_y,  half_z,  0.0f,  0.0f,  1.0f,  m_color.r, m_color.g, m_color.b,
